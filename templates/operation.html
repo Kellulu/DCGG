@@ -1,0 +1,325 @@
+{% extends "base.html" %}
+{% block title %}DataCleansing in ACTION!{% endblock%}
+
+{% block content %}
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+{% for msg in messages %}
+<p class="world_message">{{msg}}</p>
+{% endfor%}
+{% endif %}
+{% endwith %}
+
+<div id="the_world">
+
+    <div class="top">
+        <h1>Data Cleansing Go GO!</h1>
+    </div>
+
+    <div class= "main">
+        <div class="main_browser">
+            <h6 class="main_browser_h">Last Dataset Summary</h6>
+            {% autoescape off %}
+            {{dataset}}
+            {% endautoescape %}
+        </div>
+        
+        <div class="dcgg_container">
+            <div class="div_bar_l">
+                <div class="div_bar_l_title">
+                    <p class="p_steps">Step 1:<br>Robot type:</p>
+                </div>
+    
+                <form class="div_bar_l_btn">
+                    <input type="submit" id="jb" class="bar_l_btn" value="JetBot" onclick="jetbot_select()">
+                    <input type="submit" id="jr" class="bar_l_btn" value="JetRacer" onclick="jetracer_select()">
+                </form>
+            </div>
+    
+            <div class="center_container">
+                <div class="center">
+                    <div class="div_center_dataset"> 
+                        <p class="p_steps">Step 2: Upload your image dataset ("zip" file):</p>
+                        <div class="div_center_dataset_upload">
+                            <form id="form_upload" action="/dcgg" method="POST" enctype="multipart/form-data">
+                                <input type="file" id="fileupload" name="zippy">
+                                <input type="submit" id="btn_upload" value="Upload">
+                            </form>
+                        </div>
+                    </div>
+                    <div class="mains_son">
+                        <form class="div_l" action="#" method="post">
+                            <input class="btn btn_l" type="submit" name ="prev" onclick="canvas_update()" value="<" />
+                        </form>
+    
+                        <div class="center_canv">
+                            <canvas id="op_area" width="448" height="448" style="border:1px solid #d3d3d3;">
+                                <img id="src_img" width="448" height="448">
+                            </canvas>
+                        </div>
+    
+                        <form class="div_r" action="#" method="post">
+                            <input class="btn btn_r" type="submit" name ="next" onclick="canvas_update()" value=">" />
+                        </form>
+                    </div>
+
+                    <div class="div_img_num">
+                        <p class="img_num" id="img_num_title">Image: </p>
+                        <p class="img_num" id="img_num_value">999/999</p>
+                    </div>
+    
+                    <div class="div_img_name">
+                        <p class="img_name_title">File Name:</p>
+                        <p class="img_name_value">{{ img_name }}</p>
+                    </div>
+                </div>
+    
+    
+            </div>
+    
+            <div class="div_bar_r">
+                <div class="div_bar_r_title">
+                    <p class="p_steps">Options:</p>
+                </div>
+
+                <form class="div_bar_r_btn" action="#" method="post">
+
+                    <div class="div_status">
+                        <div class="div_bot_type">
+                            <label id="bot_type_title">Type:</label>
+                            <input type="text" name="bot_type" id="bot_type_value" value="..." readonly/>
+                        </div>
+
+                        <div class="div_x_cor">
+                            <label class="xy" id="x_title">x: </label>
+                            <input type="text" name="x_cor" class="xy" id="x_value" value="..." readonly/>
+                        </div>
+                        <div class="div_y_cor">
+                            <label class="xy" id="y_title">y: </label>
+                            <input type="text" name="y_cor" class="xy" id="y_value" value="..." readonly/>
+                        </div>
+                    </div>
+
+                    
+                    <input type="submit" name="zip" class="bar_r_btn bar_r_btn_zip" value="Zippp~" />
+                    <input type="submit" name="save" class="bar_r_btn" value="Save" />
+                    <input type="submit" name="del" class="bar_r_btn" value="Delete~" />
+                    <input type="submit" name="like" class="bar_r_btn bar_r_btn_like" value="Like!~"/>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock%}
+
+{% block js %}
+<script type="text/javascript">
+    var canvas = document.getElementById("op_area");
+    var ctx = canvas.getContext("2d");
+    var r = 16;
+    var c_thickness = 3;
+    var x = 0;
+    var y = 0;
+    var half_x = 0;
+    var half_y = 0;
+    var green_circle = false;
+    var blue_circle = false;
+    var green_xy = [0, 0];
+    var blue_xy = [0, 0];
+    var img_path = '';
+    var upload_message = '';
+    var bot_selected = false
+    var bot_type = ""
+
+    img_path = "{{ img_path }}";
+    upload_message = "{{ upload_status }}";
+    bot_type = "{{ bot_type }}";
+    img_count = "{{ img_count }}";
+    img_index = "{{ img_index }}";
+    
+    function bot_type_update(){
+        if (bot_type == "JetBot"){
+            bot_selected = true;
+            bot_type = "JetBot";
+            document.getElementById("jb").click();
+        } else if (bot_type == "JetRacer"){
+            bot_selected = true;
+            bot_type = "JetRacer";
+            document.getElementById("jr").click();
+        }
+        btn_disable()
+        
+    }
+
+    function btn_disable(){
+        document.getElementsByName("save")[0].disabled = true;
+        document.getElementsByName("del")[0].disabled = true;
+        document.getElementsByName("like")[0].disabled = true;
+    }
+    
+
+    function btn_enable(){
+        document.getElementsByName("save")[0].disabled = false;
+        document.getElementsByName("del")[0].disabled = false;
+        document.getElementsByName("like")[0].disabled = false;
+    }
+
+    function jetbot_select(){
+        if (bot_selected == false){
+            bot_selected = true;
+        }
+        document.getElementById("bot_type_value").value = "JetBot";
+        document.getElementById("jb").disabled = true;
+        document.getElementById("jr").disabled = false;
+    }
+
+    function jetracer_select(){
+        if (bot_selected == false){
+            bot_selected = true;
+        }
+        document.getElementById("bot_type_value").value = "JetRacer";
+        document.getElementById("jb").disabled = false;
+        document.getElementById("jr").disabled = true;
+    }
+
+    function canvas_update() {
+        document.getElementById("src_img").src = img_path;
+        var img = document.getElementById("src_img");
+        img.onload = function() {
+            ctx.drawImage(img, 0, 0, 448, 448);
+        }
+
+    }
+
+    function reset_xy() {
+        x = 0;
+        y = 0;
+        half_x = 0;
+        half_y = 0;
+    }
+
+    function circle_green(x, y) {
+        for (let i = r; i < r + c_thickness; i++) {
+            ctx.beginPath();
+            ctx.strokeStyle = '#00FF00';
+            ctx.arc(x, y, i, 0, 2 * Math.PI);
+            ctx.stroke();
+        }
+
+        document.getElementById("x_value").value = x;
+        document.getElementById("x_value").value = y;
+    }
+
+    function circle_blue(x, y) {
+        for (let i = r; i < r + c_thickness; i++) {
+            ctx.beginPath();
+            ctx.strokeStyle = '#0000FF';
+            ctx.arc(x, y, i, 0, 2 * Math.PI);
+            ctx.stroke();
+        }
+    }
+
+    function update_label_xy(x, y) {
+        document.getElementById("x_value").value = x;
+        document.getElementById("y_value").value = y;
+    }
+
+    function draw_circle(x, y) {
+        if (green_circle == false && blue_circle == false) {
+            circle_green(x, y);
+            green_circle = true;
+            green_xy[0] = x;
+            green_xy[1] = y;
+        } else if (green_circle == true && blue_circle == false) {
+            circle_blue(x, y);
+            blue_circle = true;
+            blue_xy[0] = x;
+            blue_xy[1] = y;
+        } else if (green_circle == true && blue_circle == true) {
+            canvas_update();
+            blue_circle = true;
+            circle_green(green_xy[0], green_xy[1]);
+            circle_blue(x, y);
+            blue_circle = true;
+            blue_xy[0] = x;
+            blue_xy[1] = y;
+        } else {
+            alert("Something is wrong. I think its you~");
+        }
+
+        if (bot_selected == true){
+            btn_enable();
+        }
+    }
+
+    // Mouse begin
+    function getMousePosition(canvas, event) {
+        let weird_offset = 1.81666564941406;
+        let rect = canvas.getBoundingClientRect();
+        x = Math.round((event.clientX - rect.left - 1));
+        y = Math.round((event.clientY - rect.top - weird_offset));
+
+        draw_circle(x, y);
+
+        // Half xy value to reverse doubling
+        half_x = Math.round(x / 2);
+        half_y = Math.round(y / 2);
+        update_label_xy(half_x, half_y);
+
+    }
+
+    let canvasElem = document.querySelector("canvas");
+
+    canvasElem.addEventListener("mousedown", function (e) {
+        getMousePosition(canvasElem, e);
+    });
+    // Mouse end
+
+    window.addEventListener("keydown", function(event) {
+        if (event.key == "a"){
+            //alert("a is pressed.");
+            document.getElementsByName("prev")[0].click();}
+        else if (event.key == "d"){
+            document.getElementsByName("next")[0].click();}
+        else if (event.key == " "){
+            alert("space is pressed.");
+            document.getElementsByName("save")[0].click();}
+        else if (event.key == "x"){
+            document.getElementsByName("del")[0].click();
+            confirm("Are you sure you to delete image?");
+            if (confirmAction) {
+                alert("Image is deleted");
+            } else {
+                alert("Action canceled");}}
+        });
+
+    document.querySelector('#jb').addEventListener('click', function(event) {
+        event.preventDefault();
+    });
+    document.querySelector('#jr').addEventListener('click', function(event) {
+        event.preventDefault();
+    });
+
+    document.addEventListener("DOMContentLoaded", function(event) {
+        bot_type_update();
+    });
+
+    window.onload = function(){  
+        if( img_count == ""){
+            img_count =0;
+        } else{
+            img_index = Number(img_index) + 1;
+        }
+        document.getElementById("img_num_value").innerHTML = img_index.toString() + "/" + img_count.toString();
+        
+        // Must run at last
+        canvas_update();
+        
+    }  
+    
+
+
+</script>
+{% endblock%}
